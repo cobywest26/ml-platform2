@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Platform - Machine Learning Workbench</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 8px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .header { background: white; border-bottom: 1px solid #e5e7eb; padding: 20px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; color: #4f46e5; }
+        .tabs { background: white; border-bottom: 1px solid #e5e7eb; }
+        .tabs-content { max-width: 1200px; margin: 0 auto; display: flex; gap: 4px; padding: 0 20px; }
+        .tab { padding: 12px 24px; border-bottom: 2px solid transparent; cursor: pointer; color: #6b7280; background: none; border-top: none; border-left: none; border-right: none; font-size: 14px; }
+        .tab.active { border-bottom-color: #4f46e5; color: #4f46e5; font-weight: 500; }
+        .tab:hover { color: #111827; }
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-primary { background: #4f46e5; color: white; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+        .btn-secondary { background: #f3f4f6; color: #374151; }
+        .btn-secondary:hover { background: #e5e7eb; }
+        .input { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+        .input:focus { outline: none; border-color: #4f46e5; ring: 2px; }
+        .label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #374151; }
+        .alert { padding: 16px; border-radius: 6px; margin-bottom: 16px; }
+        .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .upload-zone { border: 2px dashed #d1d5db; border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; }
+        .upload-zone:hover { border-color: #4f46e5; background: #fafafa; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f9fafb; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; }
+        .auth-container { min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; width: 100%; }
+        .auth-logo { width: 60px; height: 60px; background: #4f46e5; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; }
+        .checkbox { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .metric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 20px 0; }
+        .metric-card { padding: 16px; background: #f9fafb; border-radius: 8px; }
+        .metric-value { font-size: 24px; font-weight: bold; color: #4f46e5; }
+        .metric-label { font-size: 12px; color: #6b7280; text-transform: uppercase; margin-top: 4px; }
+        .chart { width: 100%; height: 300px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 16px; }
+        .confusion-matrix { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: 300px; }
+        .cm-cell { padding: 20px; border-radius: 8px; text-align: center; }
+        .cm-tp { background: #d1fae5; color: #065f46; }
+        .cm-tn { background: #d1fae5; color: #065f46; }
+        .cm-fp { background: #fee2e2; color: #991b1b; }
+        .cm-fn { background: #fee2e2; color: #991b1b; }
+        .cm-value { font-size: 28px; font-weight: bold; }
+        .cm-label { font-size: 11px; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script>
+        const { createElement: h, useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+
+        // ML Models - simplified implementations
+        class LinearRegression {
+            fit(X, y) {
+                const n = X[0].length;
+                this.weights = new Array(n).fill(0);
+                this.bias = 0;
+                for (let e = 0; e < 500; e++) {
+                    let pred = X.map(r => r.reduce((s, v, i) => s + v * this.weights[i], this.bias));
+                    let err = pred.map((p, i) => p - y[i]);
+                    let gW = new Array(n).fill(0);
+                    X.forEach((r, i) => r.forEach((v, j) => gW[j] += err[i] * v));
+                    gW = gW.map(g => g / X.length);
+                    let gB = err.reduce((a, b) => a + b, 0) / X.length;
+                    this.weights = this.weights.map((w, i) => w - 0.01 * gW[i]);
+                    this.bias -= 0.01 * gB;
+                }
+            }
+            predict(X) { return X.map(r => r.reduce((s, v, i) => s + v * this.weights[i], this.bias)); }
+        }
+
+        class LogisticRegression {
+            sigmoid(z) { return z.map(v => 1 / (1 + Math.exp(-v))); }
+            fit(X, y) {
+                const n = X[0].length;
+                this.weights = new Array(n).fill(0);
+                this.bias = 0;
+                for (let e = 0; e < 500; e++) {
+                    let z = X.map(r => r.reduce((s, v, i) => s + v * this.weights[i], this.bias));
+                    let pred = this.sigmoid(z);
+                    let err = pred.map((p, i) => p - y[i]);
+                    let gW = new Array(n).fill(0);
+                    X.forEach((r, i) => r.forEach((v, j) => gW[j] += err[i] * v));
+                    gW = gW.map(g => g / X.length);
+                    let gB = err.reduce((a, b) => a + b, 0) / X.length;
+                    this.weights = this.weights.map((w, i) => w - 0.01 * gW[i]);
+                    this.bias -= 0.01 * gB;
+                }
+            }
+            predict(X) {
+                let z = X.map(r => r.reduce((s, v, i) => s + v * this.weights[i], this.bias));
+                return this.sigmoid(z);
+            }
+            predictClass(X) { return this.predict(X).map(p => p >= 0.5 ? 1 : 0); }
+        }
+
+        class DecisionTree {
+            constructor(maxDepth = 5) { this.maxDepth = maxDepth; }
+            gini(y) {
+                const c = {};
+                y.forEach(l => c[l] = (c[l] || 0) + 1);
+                let imp = 1;
+                Object.values(c).forEach(cnt => imp -= Math.pow(cnt / y.length, 2));
+                return imp;
+            }
+            findSplit(X, y) {
+                let best = { gini: Infinity, feat: null, thresh: null };
+                for (let f = 0; f < X[0].length; f++) {
+                    const vals = [...new Set(X.map(r => r[f]))].sort((a, b) => a - b);
+                    for (let i = 0; i < Math.min(vals.length - 1, 10); i++) {
+                        const t = (vals[i] + vals[i + 1]) / 2;
+                        const lIdx = [], rIdx = [];
+                        X.forEach((r, idx) => (r[f] <= t ? lIdx : rIdx).push(idx));
+                        if (lIdx.length === 0 || rIdx.length === 0) continue;
+                        const g = (lIdx.length / y.length) * this.gini(lIdx.map(i => y[i])) + 
+                                  (rIdx.length / y.length) * this.gini(rIdx.map(i => y[i]));
+                        if (g < best.gini) best = { gini: g, feat: f, thresh: t };
+                    }
+                }
+                return best;
+            }
+            build(X, y, depth = 0) {
+                if (depth >= this.maxDepth || y.length < 2 || new Set(y).size === 1) {
+                    const c = {};
+                    y.forEach(l => c[l] = (c[l] || 0) + 1);
+                    return { leaf: true, pred: Object.keys(c).reduce((a, b) => c[a] > c[b] ? a : b) };
+                }
+                const s = this.findSplit(X, y);
+                if (s.feat === null) {
+                    const c = {};
+                    y.forEach(l => c[l] = (c[l] || 0) + 1);
+                    return { leaf: true, pred: Object.keys(c).reduce((a, b) => c[a] > c[b] ? a : b) };
+                }
+                const lIdx = [], rIdx = [];
+                X.forEach((r, idx) => (r[s.feat] <= s.thresh ? lIdx : rIdx).push(idx));
+                return {
+                    leaf: false, feat: s.feat, thresh: s.thresh,
+                    left: this.build(lIdx.map(i => X[i]), lIdx.map(i => y[i]), depth + 1),
+                    right: this.build(rIdx.map(i => X[i]), rIdx.map(i => y[i]), depth + 1)
+                };
+            }
+            fit(X, y) { this.tree = this.build(X, y); }
+            predictOne(x, node = this.tree) {
+                if (node.leaf) return parseFloat(node.pred);
+                return x[node.feat] <= node.thresh ? this.predictOne(x, node.left) : this.predictOne(x, node.right);
+            }
+            predict(X) { return X.map(x => this.predictOne(x)); }
+        }
+
+        class RandomForest {
+            constructor(nTrees = 5, maxDepth = 4) { this.nTrees = nTrees; this.maxDepth = maxDepth; this.trees = []; }
+            fit(X, y) {
+                this.trees = [];
+                for (let i = 0; i < this.nTrees; i++) {
+                    const idx = Array.from({ length: X.length }, () => Math.floor(Math.random() * X.length));
+                    const tree = new DecisionTree(this.maxDepth);
+                    tree.fit(idx.map(i => X[i]), idx.map(i => y[i]));
+                    this.trees.push(tree);
+                }
+            }
+            predict(X) {
+                const preds = this.trees.map(t => t.predict(X));
+                return X.map((_, i) => preds.reduce((sum, p) => sum + p[i], 0) / preds.length);
+            }
+            predictClass(X) { return this.predict(X).map(p => p >= 0.5 ? 1 : 0); }
+        }
+
+        class SimpleSVM {
+            constructor(C = 1.0) { this.C = C; }
+            fit(X, y) {
+                const n = X[0].length;
+                this.weights = new Array(n).fill(0);
+                this.bias = 0;
+                const yC = y.map(l => l === 0 ? -1 : 1);
+                for (let e = 0; e < 500; e++) {
+                    for (let i = 0; i < X.length; i++) {
+                        const cond = yC[i] * (X[i].reduce((s, v, idx) => s + v * this.weights[idx], this.bias));
+                        if (cond < 1) {
+                            this.weights = this.weights.map((w, idx) => w - 0.001 * (w - this.C * yC[i] * X[i][idx]));
+                            this.bias -= 0.001 * (-this.C * yC[i]);
+                        } else {
+                            this.weights = this.weights.map(w => w - 0.001 * w);
+                        }
+                    }
+                }
+            }
+            predict(X) {
+                return X.map(r => r.reduce((s, v, i) => s + v * this.weights[i], this.bias) >= 0 ? 1 : 0);
+            }
+            predictProba(X) {
+                return X.map(r => {
+                    const sc = r.reduce((s, v, i) => s + v * this.weights[i], this.bias);
+                    return 1 / (1 + Math.exp(-sc));
+                });
+            }
+        }
+
+        class SimpleNN {
+            constructor(layers = [10, 5, 1]) { this.layers = layers; }
+            sigmoid(x) { return 1 / (1 + Math.exp(-Math.max(-100, Math.min(100, x)))); }
+            init(inputSize) {
+                this.weights = [];
+                this.biases = [];
+                let prev = inputSize;
+                this.layers.forEach(size => {
+                    this.weights.push(Array.from({ length: prev }, () => Array.from({ length: size }, () => Math.random() * 0.2 - 0.1)));
+                    this.biases.push(Array.from({ length: size }, () => 0));
+                    prev = size;
+                });
+            }
+            forward(x) {
+                let act = x;
+                this.weights.forEach((w, i) => {
+                    const z = Array.from({ length: w[0].length }, (_, j) => {
+                        let s = this.biases[i][j];
+                        act.forEach((a, k) => s += a * w[k][j]);
+                        return s;
+                    });
+                    act = z.map(v => this.sigmoid(v));
+                });
+                return act;
+            }
+            fit(X, y) {
+                if (X.length === 0) return;
+                this.init(X[0].length);
+                for (let e = 0; e < 50; e++) {
+                    X.forEach((x, i) => {
+                        const out = this.forward(x);
+                        const err = out[0] - y[i];
+                        // Simplified backprop - just adjusting final layer
+                        this.weights[this.weights.length - 1].forEach((w, j) => {
+                            w[0] -= 0.1 * err * this.sigmoid(out[0]) * (1 - this.sigmoid(out[0])) * x[j % x.length];
+                        });
+                    });
+                }
+            }
+            predict(X) { return X.map(x => this.forward(x)[0]); }
+            predictClass(X) { return this.predict(X).map(p => p >= 0.5 ? 1 : 0); }
+        }
+
+        class AdaBoost {
+            constructor(nEstimators = 5) { this.nEstimators = nEstimators; this.models = []; this.alphas = []; }
+            fit(X, y) {
+                const n = X.length;
+                let weights = new Array(n).fill(1 / n);
+                
+                for (let i = 0; i < this.nEstimators; i++) {
+                    const tree = new DecisionTree(1);
+                    const sampledIdx = [];
+                    for (let j = 0; j < n; j++) {
+                        const r = Math.random();
+                        let sum = 0;
+                        for (let k = 0; k < n; k++) {
+                            sum += weights[k];
+                            if (r <= sum) {
+                                sampledIdx.push(k);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    tree.fit(sampledIdx.map(idx => X[idx]), sampledIdx.map(idx => y[idx]));
+                    const preds = tree.predict(X).map(p => p >= 0.5 ? 1 : 0);
+                    
+                    let err = 0;
+                    for (let j = 0; j < n; j++) {
+                        if (preds[j] !== y[j]) err += weights[j];
+                    }
+                    err = Math.max(err, 1e-10);
+                    
+                    const alpha = 0.5 * Math.log((1 - err) / err);
+                    this.models.push(tree);
+                    this.alphas.push(alpha);
+                    
+                    for (let j = 0; j < n; j++) {
+                        if (preds[j] !== y[j]) {
+                            weights[j] *= Math.exp(alpha);
+                        } else {
+                            weights[j] *= Math.exp(-alpha);
+                        }
+                    }
+                    
+                    const sum = weights.reduce((a, b) => a + b, 0);
+                    weights = weights.map(w => w / sum);
+                }
+            }
+            predict(X) {
+                const scores = X.map(() => 0);
+                this.models.forEach((model, i) => {
+                    const preds = model.predict(X).map(p => p >= 0.5 ? 1 : -1);
+                    preds.forEach((p, j) => scores[j] += this.alphas[i] * p);
+                });
+                return scores.map(s => s > 0 ? 1 : 0);
+            }
+            predictProba(X) {
+                const scores = X.map(() => 0);
+                this.models.forEach((model, i) => {
+                    const preds = model.predict(X).map(p => p >= 0.5 ? 1 : -1);
+                    preds.forEach((p, j) => scores[j] += this.alphas[i] * p);
+                });
+                return scores.map(s => 1 / (1 + Math.exp(-s)));
+            }
+        }
+
+        // Utility functions
+        const splitData = (data, trainRatio = 0.7, valRatio = 0.15) => {
+            const shuffled = [...data];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            const trainSize = Math.floor(data.length * trainRatio);
+            const valSize = Math.floor(data.length * valRatio);
+            return { 
+                train: shuffled.slice(0, trainSize), 
+                val: shuffled.slice(trainSize, trainSize + valSize),
+                test: shuffled.slice(trainSize + valSize) 
+            };
+        };
+
+        const calculateMetrics = (yTrue, yPred, yProba, isClass) => {
+            if (isClass) {
+                const tp = yTrue.reduce((s, v, i) => s + (v === 1 && yPred[i] === 1 ? 1 : 0), 0);
+                const tn = yTrue.reduce((s, v, i) => s + (v === 0 && yPred[i] === 0 ? 1 : 0), 0);
+                const fp = yTrue.reduce((s, v, i) => s + (v === 0 && yPred[i] === 1 ? 1 : 0), 0);
+                const fn = yTrue.reduce((s, v, i) => s + (v === 1 && yPred[i] === 0 ? 1 : 0), 0);
+                const acc = (tp + tn) / (tp + tn + fp + fn);
+                const prec = tp / (tp + fp) || 0;
+                const rec = tp / (tp + fn) || 0;
+                const f1 = 2 * (prec * rec) / (prec + rec) || 0;
+                
+                let rocCurve = [];
+                let rocAuc = 0;
+                if (yProba && yProba.length > 0) {
+                    const sorted = yTrue.map((label, i) => ({ label, prob: yProba[i] }))
+                        .sort((a, b) => b.prob - a.prob);
+                    
+                    const pos = yTrue.filter(y => y === 1).length;
+                    const neg = yTrue.length - pos;
+                    
+                    if (pos > 0 && neg > 0) {
+                        let tpr = 0, fpr = 0;
+                        rocCurve.push({ fpr: 0, tpr: 0 });
+                        
+                        sorted.forEach(item => {
+                            if (item.label === 1) tpr += 1 / pos;
+                            else fpr += 1 / neg;
+                            rocCurve.push({ fpr, tpr });
+                        });
+                        
+                        for (let i = 1; i < rocCurve.length; i++) {
+                            rocAuc += (rocCurve[i].fpr - rocCurve[i - 1].fpr) * rocCurve[i].tpr;
+                        }
+                    }
+                }
+                
+                return { accuracy: acc, precision: prec, recall: rec, f1, rocAuc, rocCurve, confusionMatrix: { tp, tn, fp, fn } };
+            } else {
+                const mse = yTrue.reduce((s, v, i) => s + Math.pow(v - yPred[i], 2), 0) / yTrue.length;
+                const mae = yTrue.reduce((s, v, i) => s + Math.abs(v - yPred[i]), 0) / yTrue.length;
+                return { mse, mae, rmse: Math.sqrt(mse) };
+            }
+        };
+
+        // ROC Curve Component
+        function ROCCurve({ data }) {
+            const canvasRef = React.useRef(null);
+            
+            React.useEffect(() => {
+                if (!canvasRef.current || !data || data.length === 0) return;
+                
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const width = canvas.width;
+                const height = canvas.height;
+                const padding = 40;
+                
+                ctx.clearRect(0, 0, width, height);
+                
+                // Background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                
+                // Grid
+                ctx.strokeStyle = '#e5e7eb';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 10; i++) {
+                    const x = padding + (i / 10) * (width - 2 * padding);
+                    const y = height - padding - (i / 10) * (height - 2 * padding);
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding);
+                    ctx.lineTo(x, height - padding);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(padding, y);
+                    ctx.lineTo(width - padding, y);
+                    ctx.stroke();
+                }
+                
+                // Axes
+                ctx.strokeStyle = '#374151';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding, height - padding);
+                ctx.lineTo(width - padding, height - padding);
+                ctx.stroke();
+                
+                // Diagonal reference line
+                ctx.strokeStyle = '#9ca3af';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(padding, height - padding);
+                ctx.lineTo(width - padding, padding);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // ROC Curve
+                ctx.strokeStyle = '#4f46e5';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                data.forEach((point, i) => {
+                    const x = padding + point.fpr * (width - 2 * padding);
+                    const y = height - padding - point.tpr * (height - 2 * padding);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                
+                // Labels
+                ctx.fillStyle = '#374151';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('False Positive Rate', width / 2, height - 10);
+                ctx.save();
+                ctx.translate(15, height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText('True Positive Rate', 0, 0);
+                ctx.restore();
+                
+            }, [data]);
+            
+            return h('canvas', { 
+                ref: canvasRef, 
+                width: 400, 
+                height: 400,
+                style: { border: '1px solid #e5e7eb', borderRadius: '8px', maxWidth: '100%' }
+            });
+        }
+
+        // Auth Component
+        function AuthScreen({ onLogin }) {
+            const [isLogin, setIsLogin] = useState(true);
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!username || !password) return setError('Please fill in all fields');
+                
+                const users = JSON.parse(localStorage.getItem('ml_users') || '{}');
+                if (isLogin) {
+                    if (users[username] === password) onLogin(username);
+                    else setError('Invalid credentials');
+                } else {
+                    if (users[username]) setError('Username exists');
+                    else {
+                        users[username] = password;
+                        localStorage.setItem('ml_users', JSON.stringify(users));
+                        onLogin(username);
+                    }
+                }
+            };
+
+            return h('div', { className: 'auth-container' },
+                h('div', { className: 'auth-card' },
+                    h('div', { className: 'auth-logo' }, 'ML'),
+                    h('h1', { style: { textAlign: 'center', marginBottom: '8px' } }, 'ML Platform'),
+                    h('p', { style: { textAlign: 'center', color: '#6b7280', marginBottom: '24px' } }, 
+                        'Train and compare machine learning models'),
+                    h('form', { onSubmit: handleSubmit },
+                        h('div', { style: { marginBottom: '16px' } },
+                            h('label', { className: 'label' }, 'Username'),
+                            h('input', { 
+                                type: 'text', 
+                                className: 'input', 
+                                value: username,
+                                onChange: e => setUsername(e.target.value),
+                                placeholder: 'Enter username'
+                            })
+                        ),
+                        h('div', { style: { marginBottom: '16px' } },
+                            h('label', { className: 'label' }, 'Password'),
+                            h('input', { 
+                                type: 'password', 
+                                className: 'input', 
+                                value: password,
+                                onChange: e => setPassword(e.target.value),
+                                placeholder: 'Enter password'
+                            })
+                        ),
+                        error && h('div', { className: 'alert alert-error', style: { marginBottom: '16px' } }, error),
+                        h('button', { type: 'submit', className: 'btn btn-primary', style: { width: '100%' } },
+                            isLogin ? 'Login' : 'Sign Up'
+                        ),
+                        h('div', { style: { textAlign: 'center', marginTop: '16px' } },
+                            h('button', {
+                                type: 'button',
+                                onClick: () => { setIsLogin(!isLogin); setError(''); },
+                                style: { background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', fontSize: '14px' }
+                            }, isLogin ? "Don't have an account? Sign up" : 'Have an account? Login')
+                        )
+                    )
+                )
+            );
+        }
+
+        // Main App
+        function MLPlatform() {
+            const [user, setUser] = useState(null);
+            const [tab, setTab] = useState('upload');
+            const [dataset, setDataset] = useState(null);
+            const [columns, setColumns] = useState([]);
+            const [features, setFeatures] = useState([]);
+            const [target, setTarget] = useState('');
+            const [taskType, setTaskType] = useState('classification');
+            const [models, setModels] = useState([]);
+            const [results, setResults] = useState([]);
+            const [training, setTraining] = useState(false);
+            const [error, setError] = useState('');
+            const [success, setSuccess] = useState('');
+
+            useEffect(() => {
+                const saved = localStorage.getItem('ml_current_user');
+                if (saved) setUser(saved);
+            }, []);
+
+            if (!user) return h(AuthScreen, { onLogin: (u) => { setUser(u); localStorage.setItem('ml_current_user', u); } });
+
+            const handleFile = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    let data;
+                    const name = file.name.toLowerCase();
+                    if (name.endsWith('.csv') || name.endsWith('.txt')) {
+                        const text = await file.text();
+                        data = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true }).data;
+                    } else if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+                        const buf = await file.arrayBuffer();
+                        const wb = XLSX.read(buf);
+                        data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                    } else throw new Error('Use .txt, .csv, .xlsx, or .xls files');
+                    
+                    const cols = Object.keys(data[0]);
+                    setDataset(data);
+                    setColumns(cols);
+                    setFeatures(cols.slice(0, -1));
+                    setTarget(cols[cols.length - 1]);
+                    setSuccess(`Loaded ${data.length} rows`);
+                    setTab('model');
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            const handleTrain = async () => {
+                if (!dataset || models.length === 0) return setError('Select models first');
+                setTraining(true);
+                setError('');
+                
+                try {
+                    const splits = splitData(dataset, 0.7, 0.15);
+                    const prep = (d) => ({
+                        X: d.map(r => features.map(f => parseFloat(r[f]) || 0)),
+                        y: d.map(r => parseFloat(r[target]) || 0)
+                    });
+                    const trainData = prep(splits.train);
+                    const testData = prep(splits.test);
+                    
+                    const newResults = [];
+                    for (const cfg of models) {
+                        const start = Date.now();
+                        let model;
+                        
+                        switch (cfg.type) {
+                            case 'linear': model = new LinearRegression(); break;
+                            case 'logistic': model = new LogisticRegression(); break;
+                            case 'tree': model = new DecisionTree(); break;
+                            case 'forest': model = new RandomForest(); break;
+                            case 'adaboost': model = new AdaBoost(); break;
+                            case 'svm': model = new SimpleSVM(); break;
+                            case 'nn': model = new SimpleNN(); break;
+                        }
+                        
+                        model.fit(trainData.X, trainData.y);
+                        const time = Date.now() - start;
+                        
+                        let preds, probs;
+                        if (taskType === 'classification') {
+                            if (model.predictProba) {
+                                probs = model.predictProba(testData.X);
+                                preds = probs.map(p => p >= 0.5 ? 1 : 0);
+                            } else if (model.predictClass) {
+                                preds = model.predictClass(testData.X);
+                                probs = model.predict ? model.predict(testData.X) : null;
+                            } else {
+                                preds = model.predict(testData.X).map(p => p >= 0.5 ? 1 : 0);
+                                probs = model.predict(testData.X);
+                            }
+                        } else {
+                            preds = model.predict(testData.X);
+                            probs = null;
+                        }
+                        
+                        const metrics = calculateMetrics(testData.y, preds, probs, taskType === 'classification');
+                        newResults.push({
+                            id: Date.now() + Math.random(),
+                            name: cfg.name,
+                            metrics,
+                            time
+                        });
+                        
+                        await new Promise(r => setTimeout(r, 100));
+                    }
+                    
+                    setResults(newResults);
+                    setSuccess(`Trained ${models.length} models`);
+                    setTab('results');
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setTraining(false);
+                }
+            };
+
+            return h('div', { style: { minHeight: '100vh' } },
+                h('div', { className: 'header' },
+                    h('div', { className: 'header-content' },
+                        h('div', { className: 'logo' }, 'ML Platform'),
+                        h('div', { style: { display: 'flex', gap: '16px', alignItems: 'center' } },
+                            h('span', { style: { fontSize: '14px' } }, user),
+                            h('button', {
+                                className: 'btn btn-secondary',
+                                onClick: () => { setUser(null); localStorage.removeItem('ml_current_user'); }
+                            }, 'Logout')
+                        )
+                    )
+                ),
+                h('div', { className: 'tabs' },
+                    h('div', { className: 'tabs-content' },
+                        ['upload', 'model', 'results'].map(t =>
+                            h('button', {
+                                key: t,
+                                className: `tab ${tab === t ? 'active' : ''}`,
+                                onClick: () => setTab(t)
+                            }, t.charAt(0).toUpperCase() + t.slice(1))
+                        )
+                    )
+                ),
+                h('div', { className: 'container' },
+                    error && h('div', { className: 'alert alert-error' }, error),
+                    success && h('div', { className: 'alert alert-success' }, success),
+                    
+                    tab === 'upload' && h('div', { className: 'card' },
+                        h('h2', { style: { marginBottom: '16px' } }, 'Upload Dataset'),
+                        h('label', { className: 'upload-zone' },
+                            h('input', { 
+                                type: 'file', 
+                                onChange: handleFile, 
+                                style: { display: 'none' }, 
+                                accept: '.csv,.txt,.xlsx,.xls,text/plain,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                            }),
+                            h('div', { style: { fontSize: '48px', marginBottom: '8px' } }, '📁'),
+                            h('div', null, 'Click to upload .csv, .txt, .xlsx, or .xls file')
+                        ),
+                        dataset && h('div', { style: { marginTop: '24px' } },
+                            h('h3', { style: { marginBottom: '12px' } }, 'Preview'),
+                            h('table', null,
+                                h('thead', null,
+                                    h('tr', null, columns.map(c => h('th', { key: c }, c)))
+                                ),
+                                h('tbody', null,
+                                    dataset.slice(0, 5).map((r, i) =>
+                                        h('tr', { key: i }, columns.map(c => h('td', { key: c }, String(r[c]))))
+                                    )
+                                )
+                            ),
+                            h('p', { style: { marginTop: '8px', fontSize: '14px', color: '#6b7280' } },
+                                `Showing 5 of ${dataset.length} rows`)
+                        )
+                    ),
+                    
+                    tab === 'model' && h('div', { className: 'card' },
+                        h('h2', { style: { marginBottom: '16px' } }, 'Configure Models'),
+                        !dataset ? h('p', { style: { color: '#6b7280' } }, 'Upload a dataset first') :
+                            h('div', null,
+                                h('div', { style: { marginBottom: '16px' } },
+                                    h('label', { className: 'label' }, 'Features'),
+                                    h('div', { className: 'grid' },
+                                        columns.map(c =>
+                                            h('label', { key: c, className: 'checkbox' },
+                                                h('input', {
+                                                    type: 'checkbox',
+                                                    checked: features.includes(c),
+                                                    onChange: e => setFeatures(e.target.checked ? 
+                                                        [...features, c] : features.filter(f => f !== c))
+                                                }),
+                                                c
+                                            )
+                                        )
+                                    )
+                                ),
+                                h('div', { style: { marginBottom: '16px' } },
+                                    h('label', { className: 'label' }, 'Target'),
+                                    h('select', {
+                                        className: 'input',
+                                        value: target,
+                                        onChange: e => setTarget(e.target.value)
+                                    },
+                                        h('option', { value: '' }, '-- Select --'),
+                                        columns.map(c => h('option', { key: c, value: c }, c))
+                                    )
+                                ),
+                                h('div', { style: { marginBottom: '16px' } },
+                                    h('label', { className: 'label' }, 'Task Type'),
+                                    h('div', { style: { display: 'flex', gap: '16px' } },
+                                        ['classification', 'regression'].map(t =>
+                                            h('label', { key: t, className: 'checkbox' },
+                                                h('input', {
+                                                    type: 'radio',
+                                                    checked: taskType === t,
+                                                    onChange: () => setTaskType(t)
+                                                }),
+                                                t.charAt(0).toUpperCase() + t.slice(1)
+                                            )
+                                        )
+                                    )
+                                ),
+                                h('div', { style: { marginBottom: '16px' } },
+                                    h('label', { className: 'label' }, 'Select Models'),
+                                    h('div', { className: 'grid' },
+                                        (taskType === 'classification' ? 
+                                            ['logistic', 'tree', 'forest', 'adaboost', 'svm', 'nn'] :
+                                            ['linear', 'tree', 'forest', 'nn']
+                                        ).map(t => {
+                                            const labels = {
+                                                linear: 'Linear Regression',
+                                                logistic: 'Logistic Regression',
+                                                tree: 'Decision Tree',
+                                                forest: 'Random Forest',
+                                                adaboost: 'AdaBoost (Boosting)',
+                                                svm: 'SVM',
+                                                nn: 'Neural Network'
+                                            };
+                                            const checked = models.some(m => m.type === t);
+                                            return h('label', { key: t, className: 'checkbox' },
+                                                h('input', {
+                                                    type: 'checkbox',
+                                                    checked,
+                                                    onChange: e => {
+                                                        if (e.target.checked) {
+                                                            setModels([...models, { type: t, name: labels[t] }]);
+                                                        } else {
+                                                            setModels(models.filter(m => m.type !== t));
+                                                        }
+                                                    }
+                                                }),
+                                                labels[t]
+                                            );
+                                        })
+                                    )
+                                ),
+                                h('button', {
+                                    className: 'btn btn-primary',
+                                    disabled: training || models.length === 0,
+                                    onClick: handleTrain,
+                                    style: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }
+                                },
+                                    training ? h('span', { className: 'spinner' }) : null,
+                                    training ? 'Training...' : 'Train Models'
+                                )
+                            )
+                    ),
+                    
+                    tab === 'results' && h('div', { className: 'card' },
+                        h('h2', { style: { marginBottom: '16px' } }, 'Results'),
+                        results.length === 0 ? h('p', { style: { color: '#6b7280' } }, 'No results yet') :
+                            h('div', null,
+                                h('table', null,
+                                    h('thead', null,
+                                        h('tr', null,
+                                            h('th', null, 'Rank'),
+                                            h('th', null, 'Model'),
+                                            taskType === 'classification' ?
+                                                [h('th', { key: 'acc' }, 'Accuracy'),
+                                                 h('th', { key: 'f1' }, 'F1 Score'),
+                                                 h('th', { key: 'auc' }, 'ROC-AUC')] :
+                                                [h('th', { key: 'mse' }, 'MSE'),
+                                                 h('th', { key: 'mae' }, 'MAE')],
+                                            h('th', null, 'Time (ms)')
+                                        )
+                                    ),
+                                    h('tbody', null,
+                                        results
+                                            .sort((a, b) => taskType === 'classification' ?
+                                                (b.metrics.accuracy - a.metrics.accuracy) :
+                                                (a.metrics.mse - b.metrics.mse))
+                                            .map((r, i) =>
+                                                h('tr', {
+                                                    key: r.id,
+                                                    style: i === 0 ? { background: '#fef3c7' } : {}
+                                                },
+                                                    h('td', null, i === 0 ? '🏆' : i + 1),
+                                                    h('td', null, r.name),
+                                                    taskType === 'classification' ?
+                                                        [h('td', { key: 'acc' }, (r.metrics.accuracy * 100).toFixed(1) + '%'),
+                                                         h('td', { key: 'f1' }, (r.metrics.f1 * 100).toFixed(1) + '%'),
+                                                         h('td', { key: 'auc' }, r.metrics.rocAuc ? r.metrics.rocAuc.toFixed(3) : 'N/A')] :
+                                                        [h('td', { key: 'mse' }, r.metrics.mse.toFixed(4)),
+                                                         h('td', { key: 'mae' }, r.metrics.mae.toFixed(4))],
+                                                    h('td', null, r.time)
+                                                )
+                                            )
+                                    )
+                                ),
+                                taskType === 'classification' && results[0] && results[0].metrics.confusionMatrix &&
+                                    h('div', { style: { marginTop: '32px' } },
+                                        h('h3', { style: { marginBottom: '16px' } }, 'Best Model Confusion Matrix'),
+                                        h('div', { className: 'confusion-matrix' },
+                                            h('div', { className: 'cm-cell cm-tn' },
+                                                h('div', { className: 'cm-value' }, results[0].metrics.confusionMatrix.tn),
+                                                h('div', { className: 'cm-label' }, 'True Negative')
+                                            ),
+                                            h('div', { className: 'cm-cell cm-fp' },
+                                                h('div', { className: 'cm-value' }, results[0].metrics.confusionMatrix.fp),
+                                                h('div', { className: 'cm-label' }, 'False Positive')
+                                            ),
+                                            h('div', { className: 'cm-cell cm-fn' },
+                                                h('div', { className: 'cm-value' }, results[0].metrics.confusionMatrix.fn),
+                                                h('div', { className: 'cm-label' }, 'False Negative')
+                                            ),
+                                            h('div', { className: 'cm-cell cm-tp' },
+                                                h('div', { className: 'cm-value' }, results[0].metrics.confusionMatrix.tp),
+                                                h('div', { className: 'cm-label' }, 'True Positive')
+                                            )
+                                        )
+                                    ),
+                                taskType === 'classification' && results[0] && results[0].metrics.rocCurve && results[0].metrics.rocCurve.length > 0 &&
+                                    h('div', { style: { marginTop: '32px' } },
+                                        h('h3', { style: { marginBottom: '16px' } }, `Best Model ROC Curve (AUC: ${results[0].metrics.rocAuc.toFixed(3)})`),
+                                        h(ROCCurve, { data: results[0].metrics.rocCurve })
+                                    )
+                            )
+                    )
+                )
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(h(MLPlatform));
+        console.log('✅ ML Platform loaded successfully!');
+    </script>
+</body>
+</html>
